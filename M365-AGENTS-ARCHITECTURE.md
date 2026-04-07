@@ -1,10 +1,10 @@
 # Enterprise Architecture for M365 Agents in Multi-Tenant Retail Environments
 
-**Version:** 2.1  
-**Date:** 2026-04-02  
+**Version:** 2.3  
+**Date:** 2026-04-07  
 **Classification:** Enterprise Architecture Proposal  
 **Scope:** Company-Agnostic, Enterprise-Grade  
-**Updated:** Incorporates Microsoft Agent 365 (GA May 1, 2026)
+**Updated:** Copilot Studio native multi-tenant mode (Pattern B); OWASP Top 10 mapping; Microsoft Agent 365
 
 ---
 
@@ -15,6 +15,7 @@
 3. [Microsoft Agent 365: The Native Control Plane](#3-microsoft-agent-365-the-native-control-plane) *(NEW)*
 4. [Reference Architectures](#4-reference-architectures)
 5. [Detailed Component Descriptions](#5-detailed-component-descriptions)
+   - 5.7 [OWASP Top 10 for Agentic AI Mapping](#57-owasp-top-10-for-agentic-ai-mapping) *(NEW)*
 6. [Security Architecture & Risks](#6-security-architecture--risks)
 7. [Operational Model](#7-operational-model)
 8. [Team Structure & RACI Matrix](#8-team-structure--raci-matrix)
@@ -451,6 +452,163 @@ SharePoint / OneDrive / Dataverse
 - Application registered in Enterprise Tenant as multi-tenant app
 - Consented in Retail Tenant via admin consent flow
 - Agents authenticate as app (client credentials) for cross-tenant access
+
+*Option 4: Copilot Studio Native Multi-Tenant Mode (Public Preview)*
+
+> **Status:** Public Preview (February 2026)  
+> **Reference:** [Overview of multitenant mode in Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/multi-tenant-overview)
+
+Copilot Studio now supports **native multi-tenant mode**, allowing agents hosted in one tenant to be used by users in different Microsoft Entra ID tenants without complex B2B or cross-tenant app setup.
+
+**How It Works:**
+- Agent is built and hosted in the **host tenant** (e.g., Enterprise Tenant)
+- Users in **client tenants** (e.g., Retail Tenant) access the agent via Teams or M365 Copilot
+- Host tenant owns billing, governance, and agent lifecycle
+- Client tenant users authenticate via their own Entra ID; the agent receives authenticated context
+
+**Supported Channels:**
+- Microsoft Teams (1:1 conversations only; group chats not supported)
+- Microsoft 365 Copilot
+
+**Supported Features in Preview:**
+
+| Category | Supported | Not Supported |
+|----------|-----------|---------------|
+| **Knowledge** | Dataverse Upload, Public Websites | SharePoint (cross-tenant), OneDrive |
+| **Tools** | Prompts, REST API connectors, Limited standard connectors (maker auth) | Custom connectors, Computer use, Agent flows, MCP tools |
+| **Authentication** | Maker authentication (service principal) | End-user authentication, OAuth, Graph/M365 connectors, Guest users |
+| **Analytics** | Channel metrics (Teams-provided) | Aggregated analytics, Transcript data, Session downloads, Satisfaction/effectiveness |
+| **Other** | Single-geo deployment | Multi-geo, GCC/GCC High, Group conversations |
+
+**Current Limitations (Public Preview):**
+
+| Limitation | Impact on Retail Scenarios | Workaround |
+|------------|---------------------------|------------|
+| **Analytics disabled** | Cannot track agent performance across franchise tenants | Use Teams-provided channel metrics; build custom logging via REST API actions |
+| **Dataverse transcripts unavailable** | Cannot review conversation history for compliance/training | Export via custom logging endpoint in agent flow; store in host tenant |
+| **No end-user authentication** | Cannot access resources requiring delegated user permissions | Use maker authentication for data access; limit to non-personalized scenarios |
+| **No Graph/M365 connectors** | Cannot query calendar, email, or M365 data in client tenant | Agent queries host tenant only; use REST API for client tenant integration |
+| **No custom connectors** | Cannot integrate with proprietary retail systems via custom connectors | Use REST API actions with public/authenticated endpoints |
+| **Single-geo only** | Data residency compliance remains partner responsibility | Verify host tenant region meets client tenant regulatory requirements |
+
+**Admin Controls:**
+
+*Host Tenant (Agent Owner):*
+- Power Platform Admin Center → Tenant Isolation controls multi-tenant availability
+- If tenant isolation is ON, multi-tenant mode is blocked (unless specific tenants allow-listed)
+- DLP policies apply to host tenant
+- Billing responsibility remains with host tenant
+
+*Client Tenant (Agent Consumer):*
+- Microsoft Admin Center controls app installation
+- Standard 3P app governance applies
+- Purview integration shows host tenant agent usage (users appear as "anonymous" with GUID)
+
+---
+
+#### Comparison: Native Multi-Tenant Mode vs. Custom Identity Patterns
+
+| Criterion | Native Multi-Tenant Mode | B2B Collaboration | Cross-Tenant Sync | Multi-Tenant App Reg |
+|-----------|--------------------------|-------------------|-------------------|---------------------|
+| **Setup Complexity** | ✅ Low (toggle + Teams publish) | Medium (invite flow) | High (sync config) | High (app consent) |
+| **Time to Deploy** | Days | 1-2 weeks | 2-4 weeks | 1-2 weeks |
+| **End-User Auth** | ❌ Not supported | ✅ Full delegated | ✅ Full delegated | ✅ Via OBO flow |
+| **Graph/M365 Access** | ❌ Host tenant only | ✅ Both tenants | ✅ Both tenants | ✅ Consented tenant |
+| **Custom Connectors** | ❌ Not supported | ✅ Full support | ✅ Full support | ✅ Full support |
+| **Analytics** | ❌ Disabled | ✅ Full | ✅ Full | ✅ Full |
+| **Transcripts** | ❌ Disabled | ✅ Full | ✅ Full | ✅ Full |
+| **Billing Model** | Host pays all | Per-tenant | Per-tenant | Varies |
+| **Compliance/Audit** | Limited (no transcripts) | Full | Full | Full |
+| **Production Readiness** | ⚠️ Preview | ✅ GA | ✅ GA | ✅ GA |
+
+---
+
+#### Decision Guidance: When to Use Each Pattern
+
+**Use Native Multi-Tenant Mode When:**
+- ✅ Building ISV/partner agents for Teams Store distribution
+- ✅ FAQ-style, informational agents without personalized data access
+- ✅ Rapid prototyping of cross-tenant scenarios
+- ✅ Host tenant can own all billing and governance
+- ✅ No requirement for conversation transcripts or detailed analytics
+- ✅ Agent functionality limited to public websites, REST APIs, and Dataverse knowledge
+
+**Use B2B Collaboration When:**
+- ✅ Need end-user authentication and delegated permissions
+- ✅ Require access to Graph/M365 data in both tenants
+- ✅ Full analytics and transcript compliance requirements
+- ✅ Limited number of cross-tenant users (manual invite manageable)
+- ✅ Production workloads requiring GA-supported features
+
+**Use Cross-Tenant Synchronization When:**
+- ✅ Large-scale user base requiring cross-tenant access
+- ✅ Seamless SSO experience without explicit invitations
+- ✅ Ongoing identity synchronization requirements
+- ✅ Already invested in cross-tenant sync for other workloads
+
+**Use Multi-Tenant App Registration When:**
+- ✅ Agent operates as a service (app identity, not user identity)
+- ✅ Same agent deployed across many tenants (SaaS model)
+- ✅ Client credentials flow sufficient for data access
+- ✅ Need full Copilot Studio feature set with GA support
+
+---
+
+#### Migration Path: Custom Patterns → Native Multi-Tenant Mode
+
+For organizations currently using Pattern B workarounds who want to evaluate native multi-tenant mode:
+
+**Phase 1: Assessment (1-2 weeks)**
+```
+☐ Inventory current cross-tenant agents and their capabilities
+☐ Map feature requirements against native mode limitations
+☐ Identify agents suitable for migration (FAQ, informational, non-personalized)
+☐ Verify host tenant region meets data residency requirements
+☐ Review billing implications (host pays all)
+```
+
+**Phase 2: Pilot (2-4 weeks)**
+```
+☐ Select 1-2 low-risk agents for pilot
+☐ Enable multi-tenant mode in Copilot Studio (verify tenant isolation is OFF or allow-listed)
+☐ Publish to Teams channel with multi-tenant flag
+☐ Sideload .ZIP manifest in test client tenant
+☐ Validate functionality with users from client tenant
+☐ Document gaps vs. current B2B/app registration approach
+```
+
+**Phase 3: Parallel Run (4-8 weeks)**
+```
+☐ Run native mode agent alongside existing cross-tenant agent
+☐ Compare user experience and capabilities
+☐ Monitor for feature gaps or blockers
+☐ Collect user feedback from client tenant
+☐ Evaluate Teams Store publication (if applicable)
+```
+
+**Phase 4: Decision (1 week)**
+```
+☐ If native mode meets requirements: Deprecate B2B/app registration approach
+☐ If gaps remain: Continue with custom pattern; re-evaluate at native mode GA
+☐ Document lessons learned for future migrations
+```
+
+**Rollback Plan:**
+Native multi-tenant mode can be disabled at any time in Copilot Studio. The agent reverts to single-tenant behavior. Existing B2B/app registration patterns remain available as fallback.
+
+---
+
+**Hybrid Architecture: Combining Native + Custom Patterns**
+
+For retail organizations with diverse requirements, a hybrid approach may be optimal:
+
+| Agent Type | Recommended Pattern | Rationale |
+|------------|--------------------|-----------| 
+| Store FAQ Bot | Native Multi-Tenant | Informational only; no auth required; rapid deployment |
+| Inventory Query Agent | Multi-Tenant App Reg | Requires Graph access to retail tenant Dataverse |
+| HR Policy Agent | B2B Collaboration | Requires delegated access to user's HR profile |
+| POS Support Agent | Native Multi-Tenant | Public website knowledge; REST API for tickets |
+| Customer Service Agent | Cross-Tenant Sync | Needs seamless SSO for customer data access |
 
 **Data Flow:**
 ```
@@ -1076,6 +1234,398 @@ Enterprise Tenant                    Retail Tenant
 - Standardized protocol for agent-to-data communication
 - Supports Microsoft and third-party MCP servers
 - Enables consistent context across agent ecosystem
+
+### 5.7 OWASP Top 10 for Agentic AI Mapping
+
+> **Reference:** [OWASP Top 10 for Agentic Applications (2026)](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)  
+> **Microsoft Guidance:** [Addressing the OWASP Top 10 Risks in Agentic AI with Microsoft Copilot Studio](https://www.microsoft.com/en-us/security/blog/2026/03/30/addressing-the-owasp-top-10-risks-in-agentic-ai-with-microsoft-copilot-studio/) (March 2026)
+
+The OWASP Top 10 for Agentic Applications identifies critical security risks specific to autonomous AI systems that plan, act, and make decisions across complex workflows. For multi-tenant retail environments, these risks are amplified by cross-tenant data flows, franchise identity boundaries, and high-volume consumer interactions.
+
+#### 5.7.1 Risk Mapping Overview
+
+| OWASP ID | Risk Name | Severity in Multi-Tenant Retail | Primary Copilot Studio/Agent 365 Mitigation |
+|----------|-----------|--------------------------------|---------------------------------------------|
+| ASI01 | Agent Goal Hijack | **Critical** | Content filtering, grounding separation, prompt shields |
+| ASI02 | Tool Misuse & Exploitation | **Critical** | Predefined actions, connector DLP, constrained tool invocation |
+| ASI03 | Identity & Privilege Abuse | **Critical** | Entra Agent ID, Conditional Access, least privilege |
+| ASI04 | Agentic Supply Chain Vulnerabilities | **High** | Plugin vetting, signed connectors, secure registry |
+| ASI05 | Unexpected Code Execution | **High** | Sandboxed execution, no arbitrary code generation |
+| ASI06 | Memory & Context Poisoning | **Medium** | Grounding data governance, RAG access controls |
+| ASI07 | Insecure Inter-Agent Communication | **High** | A2A authentication via Agent ID, message integrity |
+| ASI08 | Cascading Failures | **High** | Isolated environments, circuit breakers, disable/restrict controls |
+| ASI09 | Human–Agent Trust Exploitation | **Medium** | Output validation, authority bias training, approval workflows |
+| ASI10 | Rogue Agents | **Critical** | Agent registry, behavioral monitoring, republishing controls |
+
+---
+
+#### 5.7.2 ASI01: Agent Goal Hijack
+
+**OWASP Definition:** Redirecting an agent's goals or plans through injected instructions or poisoned content.
+
+**Multi-Tenant Retail Threat Scenario:**
+An attacker embeds malicious instructions in a product description or customer message that causes a cross-tenant inventory agent to disclose pricing strategies or redirect stock allocation decisions. In franchise models, a compromised knowledge source in one franchisee's environment could manipulate an enterprise agent's behavior when queried.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Content Filtering:** Built-in Azure AI Content Safety screens inputs for prompt injection patterns
+- **Grounding Separation:** Knowledge sources are segmented from instruction context
+- **Prompt Shields:** System prompt protection prevents user content from overriding agent instructions
+- **Agent 365 Threat Protection:** Runtime detection of goal hijacking attempts with alerting
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Anomaly in agent decision patterns (e.g., unusual inventory transfers) | Auto-pause agent; trigger investigation | AI Operations |
+| Prompt injection patterns in customer service inputs | Block input; log for review; notify security | Security Operations |
+| Cross-tenant query attempting instruction override | Block at tenant boundary; alert CoE | IAM Team |
+
+**KQL Hunt Query (Defender):**
+```kusto
+CopilotAgentActivity
+| where ActivityType == "PromptProcessing"
+| where PromptContent contains_any("ignore previous", "disregard instructions", "system prompt")
+| where TenantId != HomeTenantId  // Cross-tenant context
+| project Timestamp, AgentId, UserId, PromptContent, TenantId
+```
+
+---
+
+#### 5.7.3 ASI02: Tool Misuse & Exploitation
+
+**OWASP Definition:** Misusing legitimate tools through unsafe chaining, ambiguous instructions, or manipulated tool outputs.
+
+**Multi-Tenant Retail Threat Scenario:**
+A store operations agent legitimately connected to inventory, pricing, and customer systems could be manipulated to chain tools in unintended ways—e.g., using price lookup + inventory update + customer notification to execute an unauthorized promotional discount across all stores. Cross-tenant connector abuse could expose enterprise pricing models to franchise agents.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Predefined Actions & Connectors:** Agents can only invoke explicitly configured tools
+- **Connector DLP Policies:** Block or restrict dangerous connector combinations per environment
+- **Tool Output Validation:** Responses are sanitized before further processing
+- **Agent 365 Govern Pillar:** Tool usage monitoring and policy enforcement
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Unusual tool chaining sequence (e.g., price→inventory→notify) | Flag for human review before execution | Business Process Owner |
+| High-frequency API calls to pricing/inventory systems | Rate limit; investigate for automation abuse | Platform Engineering |
+| Cross-tenant connector invocation outside approved patterns | Block; review cross-tenant access settings | IAM Team |
+
+**Recommended DLP Configuration:**
+```
+Environment: Production-Retail
+Blocked Connector Combinations:
+├── Pricing API + Mass Notification (without approval)
+├── Inventory Write + External Email
+└── Customer PII Access + Any External Connector
+```
+
+---
+
+#### 5.7.4 ASI03: Identity & Privilege Abuse
+
+**OWASP Definition:** Exploiting delegated trust, inherited credentials, or role chains to gain unauthorized access or actions.
+
+**Multi-Tenant Retail Threat Scenario:**
+An agent operating under delegated user permissions in the retail tenant accesses enterprise-tenant resources through over-permissioned cross-tenant trust. Alternatively, a franchise manager's agent inherits corporate pricing privileges through poorly scoped B2B collaboration, enabling unauthorized margin changes.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Entra Agent ID:** First-class agent identities with dedicated Conditional Access policies
+- **Agent-Specific Conditional Access:** Block high-risk agents; require specific compliance posture
+- **Least Privilege by Design:** Agents request only necessary Graph/API scopes
+- **Cross-Tenant Access Settings:** Explicit trust with granular permission scoping
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Agent identity accessing resources outside defined scope | Block access; review agent permissions | IAM Team |
+| Elevated privilege usage during non-business hours | Alert; require re-authentication | Security Operations |
+| Cross-tenant token acquisition for unregistered resources | Deny token; investigate app registration | IAM Team |
+
+**Conditional Access Policy Template:**
+```
+Policy: "Retail Agent Privilege Boundaries"
+├── Applies to: All agent identities with blueprint="RetailOps"
+├── Target resources: Enterprise Tenant apps (Pricing, Inventory Master)
+├── Conditions:
+│   ├── Agent risk: High → Block
+│   └── Custom attribute: cross_tenant_approved ≠ true → Block
+└── Grant: Allow with audit logging
+```
+
+---
+
+#### 5.7.5 ASI04: Agentic Supply Chain Vulnerabilities
+
+**OWASP Definition:** Compromised or tampered third-party agents, tools, plugins, registries, or update channels.
+
+**Multi-Tenant Retail Threat Scenario:**
+A third-party retail analytics connector used by franchise agents is compromised, exfiltrating sales data to an external endpoint. Alternatively, a malicious update to a shared Power Platform component introduces a backdoor affecting agents across both enterprise and retail tenants.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Connector Certification:** Use Microsoft-certified connectors where possible
+- **Plugin Signing:** Custom connectors require signature validation
+- **Agent 365 Secure Pillar:** Vulnerability scanning for agent dependencies
+- **Environment Isolation:** Production environments separate from development/test
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Connector update outside change window | Block deployment; require CAB approval | Platform Engineering |
+| New external data egress from agent | Investigate immediately; disable agent | Security Operations |
+| Dependency vulnerability alert (Defender for Cloud) | Patch within SLA; isolate if critical | AI Engineering |
+
+**Supply Chain Governance Checklist:**
+- [ ] All custom connectors signed and stored in secure registry
+- [ ] Third-party connectors reviewed quarterly for security posture
+- [ ] Plugin updates require security scan before deployment
+- [ ] Separate connector approval for production vs. non-production
+
+---
+
+#### 5.7.6 ASI05: Unexpected Code Execution
+
+**OWASP Definition:** Turning agent-generated or agent-invoked code into unintended execution, compromise, or escape.
+
+**Multi-Tenant Retail Threat Scenario:**
+An analytics agent generates a query or script that, when executed against a retail data warehouse, performs destructive operations or exfiltrates data. A prompt injection causes an agent to generate and execute code that escapes its sandbox.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **No Arbitrary Code Generation:** Copilot Studio agents use predefined actions, not dynamic code
+- **Sandboxed Execution:** Power Platform provides isolated runtime environments
+- **Code-First Agent Isolation:** Custom engine agents run in containerized/serverless environments
+- **Output Filtering:** Generated content is validated before execution
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Agent attempting to generate SQL/scripts outside approved templates | Block execution; log attempt | AI Engineering |
+| Sandbox escape attempt detected | Disable agent immediately; forensic analysis | Security Operations |
+| Unusual compute resource consumption | Throttle; investigate for cryptomining/abuse | Platform Engineering |
+
+**Architecture Constraint:**
+For retail agents requiring data manipulation, use parameterized stored procedures or pre-approved Power Automate flows—never dynamic SQL or script generation.
+
+---
+
+#### 5.7.7 ASI06: Memory & Context Poisoning
+
+**OWASP Definition:** Corrupting stored context (memory, embeddings, RAG stores) to bias future reasoning and actions.
+
+**Multi-Tenant Retail Threat Scenario:**
+An attacker injects misleading information into a SharePoint knowledge base used for RAG grounding, causing store associates' agents to provide incorrect return policies. Embedding poisoning in a shared product catalog could bias inventory recommendations across all franchises.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Knowledge Source Access Controls:** Respect SharePoint/OneDrive permissions (ACL trimming)
+- **Sensitivity Label Inheritance:** RAG sources carry classification to agent responses
+- **Embedding Integrity:** Azure AI Search provides versioning and audit trails
+- **Grounding Data Governance:** Microsoft Purview tracks data lineage
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Unusual edits to high-value knowledge sources | Alert content owner; review changes | Knowledge Management |
+| Agent responses inconsistent with source data | Investigate grounding pipeline; check for poisoning | AI Engineering |
+| Embedding index rebuild outside schedule | Verify authorization; check for tampering | Platform Engineering |
+
+**Knowledge Source Governance:**
+| Source Type | Write Access | Audit Frequency | Validation |
+|-------------|--------------|-----------------|------------|
+| Corporate Policy Docs | Restricted (Policy team only) | Real-time | Approval workflow |
+| Product Catalog | Automated (PIM system) | Daily | Reconciliation |
+| Store Operations KB | Regional managers | Weekly | Spot checks |
+
+---
+
+#### 5.7.8 ASI07: Insecure Inter-Agent Communication
+
+**OWASP Definition:** Spoofing, intercepting, or manipulating agent-to-agent messages due to weak authentication or integrity checks.
+
+**Multi-Tenant Retail Threat Scenario:**
+A rogue agent in a franchisee tenant impersonates an enterprise inventory agent, sending fraudulent stock transfer requests to distribution centers. Cross-tenant agent-to-agent flows without proper authentication enable unauthorized data exchange.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Entra Agent ID for A2A:** Agent-to-agent authentication using first-class identities
+- **Token Binding:** Agent tokens bound to specific agent instances
+- **Message Signing:** Integrity verification for inter-agent payloads
+- **Agent 365 Registry:** Authoritative inventory of legitimate agents per tenant
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| A2A communication from unregistered agent | Block; alert security | IAM Team |
+| Message signature validation failure | Reject message; log for investigation | Platform Engineering |
+| Cross-tenant A2A without explicit trust relationship | Block at tenant boundary | IAM Team |
+
+**A2A Authentication Pattern:**
+```
+┌───────────────────┐        ┌───────────────────┐
+│ Enterprise Agent  │        │   Retail Agent    │
+│ (Agent ID: A1)    │        │   (Agent ID: A2)  │
+└─────────┬─────────┘        └─────────┬─────────┘
+          │                            │
+          │  1. Request token for A2   │
+          ├───────────────────────────►│
+          │     (signed with A1 cert)  │
+          │                            │
+          │  2. Validate A1 identity   │
+          │     via Agent Registry     │
+          │                            │
+          │  3. Return scoped response │
+          │◄────────────────────────────
+          │     (signed with A2 cert)  │
+```
+
+---
+
+#### 5.7.9 ASI08: Cascading Failures
+
+**OWASP Definition:** A single fault propagating across agents, tools, and workflows into system-wide impact.
+
+**Multi-Tenant Retail Threat Scenario:**
+An error in an enterprise pricing agent cascades to retail store agents, which then propagate incorrect prices to POS systems and customer-facing apps across hundreds of locations. A failed authentication in one tenant's agent triggers retry storms that impact cross-tenant services.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Isolated Environments:** Agents run in isolated Power Platform environments
+- **Disable/Restrict Controls:** Agents can be disabled immediately without code deployment
+- **Circuit Breakers:** Built-in retry limits and timeout controls
+- **Agent 365 Observe Pillar:** Real-time monitoring of agent health and dependencies
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Spike in agent error rates (>2σ from baseline) | Trigger circuit breaker; isolate affected agents | AI Operations |
+| Downstream system degradation correlated with agent activity | Disable upstream agent; rollback if needed | Platform Engineering |
+| Cross-tenant impact from single-tenant agent failure | Activate tenant isolation; notify affected franchises | CoE Director |
+
+**Blast Radius Mitigation Architecture:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ENTERPRISE TENANT                            │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │ Pricing     │    │ Inventory   │    │ Analytics   │         │
+│  │ Agent       │    │ Agent       │    │ Agent       │         │
+│  │ ┌─────────┐ │    │ ┌─────────┐ │    │ ┌─────────┐ │         │
+│  │ │Circuit  │ │    │ │Circuit  │ │    │ │Circuit  │ │         │
+│  │ │Breaker  │ │    │ │Breaker  │ │    │ │Breaker  │ │         │
+│  │ └─────────┘ │    │ └─────────┘ │    │ └─────────┘ │         │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘         │
+│         │                  │                  │                 │
+│         └──────────────────┼──────────────────┘                 │
+│                            │                                    │
+│                    ┌───────▼───────┐                            │
+│                    │ Tenant        │                            │
+│                    │ Isolation     │                            │
+│                    │ Boundary      │                            │
+│                    └───────┬───────┘                            │
+└────────────────────────────┼────────────────────────────────────┘
+                             │
+┌────────────────────────────┼────────────────────────────────────┐
+│                    RETAIL TENANT                                │
+│                    ┌───────▼───────┐                            │
+│                    │ Cross-Tenant  │                            │
+│                    │ Gateway       │                            │
+│                    └───────┬───────┘                            │
+│                            │                                    │
+│  ┌─────────────┐    ┌──────▼──────┐    ┌─────────────┐         │
+│  │ Store A     │    │ Store B     │    │ Store C     │         │
+│  │ Agent       │    │ Agent       │    │ Agent       │         │
+│  └─────────────┘    └─────────────┘    └─────────────┘         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 5.7.10 ASI09: Human–Agent Trust Exploitation
+
+**OWASP Definition:** Abusing user trust and authority bias to get unsafe approvals or extract sensitive information.
+
+**Multi-Tenant Retail Threat Scenario:**
+A malicious actor manipulates an agent to present a fraudulent refund request with artificial urgency, exploiting store managers' trust in "the system" to approve large transactions. Alternatively, an agent is coaxed into presenting data access requests that seem routine but actually exfiltrate customer PII.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Output Validation:** Agent responses reviewed for authority manipulation patterns
+- **Approval Workflows:** High-impact actions require explicit human confirmation
+- **Agent Transparency:** Users can see what data sources and tools agents are using
+- **Agent 365 Governance:** Policies for what agents can request from users
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Agent requesting approval for action outside normal patterns | Add friction (second approver, delay) | Business Process Owner |
+| Sudden increase in high-value transaction approvals via agents | Audit sample; investigate anomalies | Loss Prevention |
+| User reports agent exhibiting pressure tactics | Disable agent; review prompt design | AI Engineering |
+
+**Human-in-the-Loop Thresholds:**
+| Action Type | Threshold | Approval Requirement |
+|-------------|-----------|---------------------|
+| Customer refund | >$500 | Manager approval + reason code |
+| Inventory transfer | >1000 units | Regional manager approval |
+| Price override | Any | Store manager + LP alert |
+| PII export | Any | Data steward approval + audit log |
+
+---
+
+#### 5.7.11 ASI10: Rogue Agents
+
+**OWASP Definition:** Agents drifting or being compromised in ways that cause harmful behavior beyond intended scope.
+
+**Multi-Tenant Retail Threat Scenario:**
+A Copilot Studio agent initially scoped to answer store policy questions gradually expands its tool usage and begins accessing customer records, inventory systems, and pricing—either through misconfiguration drift or deliberate tampering. In multi-tenant environments, a rogue agent in one franchise could attempt to propagate to enterprise systems.
+
+**Copilot Studio / Agent 365 Mitigations:**
+- **Agent Registry:** Complete inventory of all agents, their capabilities, and status
+- **Immutable Configuration:** Agents cannot modify their own logic; changes require republishing
+- **Behavioral Monitoring:** Agent 365 Observe pillar tracks deviations from expected behavior
+- **Disable/Restrict Controls:** Immediate containment without code deployment
+
+**Retail-Specific Detection & Response:**
+| Detection Method | Response Action | Owner |
+|-----------------|-----------------|-------|
+| Agent accessing resources not in original manifest | Disable agent; investigate configuration drift | AI Engineering |
+| Shadow agent discovered (not in registry) | Block immediately; escalate to security | CoE / Security |
+| Agent behavior deviation from baseline (ML anomaly detection) | Flag for review; consider containment | AI Operations |
+
+**Agent Drift Prevention Checklist:**
+- [ ] All production agents registered in Agent 365 registry
+- [ ] Weekly comparison of agent capabilities vs. approved manifest
+- [ ] Automated alerts for any agent republishing
+- [ ] Quarterly access reviews for all enterprise agents
+- [ ] Cross-tenant agent trust relationships reviewed monthly
+
+**Shadow Agent Hunt Query:**
+```kusto
+let RegisteredAgents = AgentRegistry | distinct AgentId;
+CopilotAgentActivity
+| where AgentId !in (RegisteredAgents)
+| summarize FirstSeen=min(Timestamp), LastSeen=max(Timestamp), 
+            ActivityCount=count() by AgentId, TenantId
+| order by ActivityCount desc
+```
+
+---
+
+#### 5.7.12 Implementation Roadmap
+
+**Phase 1: Foundation (Months 1-3)**
+- [ ] Enable Agent 365 Observe pillar across all tenants
+- [ ] Register all existing agents in Agent 365 registry
+- [ ] Implement Entra Agent ID for Tier 3+ agents
+- [ ] Deploy baseline Conditional Access policies for agents
+- [ ] Establish KQL hunt queries for top 5 risks (ASI01, ASI02, ASI03, ASI08, ASI10)
+
+**Phase 2: Hardening (Months 4-6)**
+- [ ] Enable Agent 365 Govern pillar with lifecycle policies
+- [ ] Implement connector DLP policies aligned to OWASP risks
+- [ ] Deploy human-in-the-loop thresholds for retail operations
+- [ ] Establish A2A authentication for cross-tenant agent flows
+- [ ] Train SOC on agent-specific incident response
+
+**Phase 3: Maturity (Months 7-12)**
+- [ ] Enable Agent 365 Secure pillar with runtime threat protection
+- [ ] Integrate agent telemetry into Microsoft Sentinel
+- [ ] Implement ML-based behavioral anomaly detection
+- [ ] Conduct tabletop exercises for agent compromise scenarios
+- [ ] Achieve OWASP compliance attestation
 
 ---
 
