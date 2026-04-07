@@ -1,10 +1,10 @@
 # Enterprise Architecture for M365 Agents in Multi-Tenant Retail Environments
 
-**Version:** 2.3  
+**Version:** 3.0  
 **Date:** 2026-04-07  
 **Classification:** Enterprise Architecture Proposal  
 **Scope:** Company-Agnostic, Enterprise-Grade  
-**Updated:** Copilot Studio native multi-tenant mode (Pattern B); OWASP Top 10 mapping; Microsoft Agent 365
+**Updated:** Deep research expansion—RAG grounding, MCP servers, Multi-Agent Orchestration; Copilot Studio native multi-tenant; OWASP Top 10; Agent 365
 
 ---
 
@@ -15,7 +15,10 @@
 3. [Microsoft Agent 365: The Native Control Plane](#3-microsoft-agent-365-the-native-control-plane) *(NEW)*
 4. [Reference Architectures](#4-reference-architectures)
 5. [Detailed Component Descriptions](#5-detailed-component-descriptions)
-   - 5.7 [OWASP Top 10 for Agentic AI Mapping](#57-owasp-top-10-for-agentic-ai-mapping) *(NEW)*
+   - 5.3.2 [RAG Deep Dive](#532-rag-retrieval-augmented-generation) *(EXPANDED)*
+   - 5.4.2 [MCP Servers](#542-model-context-protocol-mcp) *(EXPANDED)*
+   - 5.5 [Multi-Agent Orchestration](#55-multi-agent-orchestration) *(NEW)*
+   - 5.7 [OWASP Top 10 for Agentic AI Mapping](#57-owasp-top-10-for-agentic-ai-mapping)
 6. [Security Architecture & Risks](#6-security-architecture--risks)
 7. [Operational Model](#7-operational-model)
 8. [Team Structure & RACI Matrix](#8-team-structure--raci-matrix)
@@ -1202,17 +1205,151 @@ Enterprise Tenant                    Retail Tenant
 
 #### 5.3.2 RAG (Retrieval-Augmented Generation)
 
-**Role:** Ground agent responses in enterprise knowledge.
+> **Reference:** [Enhance AI responses with Retrieval Augmented Generation](https://learn.microsoft.com/en-us/microsoft-copilot-studio/guidance/retrieval-augmented-generation)
 
-**Components:**
-- **Knowledge Sources:** SharePoint, OneDrive, Dataverse, custom indexes
-- **Vector Stores:** Azure AI Search, Cosmos DB (vCore)
-- **Embedding Models:** Azure OpenAI embeddings
+**Role:** Ground agent responses in enterprise knowledge, reducing hallucination and ensuring accuracy through retrieval from trusted organizational content.
 
-**Security Considerations:**
-- Respect source document permissions (ACL trimming)
-- Data classification inheritance
-- Prompt injection protection
+**RAG Architecture in Copilot Studio:**
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        USER QUERY                                    │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   QUERY OPTIMIZATION ENGINE                          │
+│  • Clarifies meaning, adds context (last 10 turns)                  │
+│  • Generates search-friendly queries                                │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│   SharePoint  │    │   Dataverse   │    │   Azure AI    │
+│   / OneDrive  │    │   Upload/     │    │    Search     │
+│               │    │   Tables      │    │               │
+└───────────────┘    └───────────────┘    └───────────────┘
+        │                     │                     │
+        └─────────────────────┼─────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   SUMMARIZATION ENGINE                               │
+│  • Synthesizes top 3 results per source                             │
+│  • Applies custom instructions, generates citations                 │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   GROUNDED RESPONSE                                  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### Knowledge Source Comparison for Retail
+
+| Source | Best For | Authentication | Cost (Credits) | Retail Use Case |
+|--------|----------|----------------|----------------|-----------------|
+| **SharePoint / OneDrive** | Internal docs, policies, SOPs | Entra ID delegated | Standard (free with M365 Copilot) | Store operations manuals, HR policies |
+| **Tenant Graph Grounding** | Cross-M365 semantic search | Entra ID delegated | **10 credits/interaction** | Enterprise-wide knowledge, Graph connectors |
+| **Dataverse Upload** | Static reference docs | None | Standard | Product catalogs, training materials |
+| **Dataverse Tables** | Structured business records | Entra ID delegated | Standard | Inventory data, pricing tables |
+| **Azure AI Search** | Custom vector indexes | Configured endpoint | Standard + Azure costs | Product search, recommendation engines |
+| **Public Websites** | External FAQ, support | None | Standard | Vendor documentation, industry standards |
+| **Graph Connectors** | Enterprise apps (ServiceNow, Confluence) | Entra ID delegated | 10 credits (enhanced) | IT tickets, knowledge bases |
+
+---
+
+##### Tenant Graph Grounding Configuration
+
+> **Cost:** 10 Copilot Credits per graph-grounded interaction
+
+Tenant Graph Grounding provides **semantic search across the entire Microsoft Graph**, including data indexed via Graph Connectors. This significantly improves retrieval quality for SharePoint-grounded agents.
+
+**When to Enable:**
+- ✅ Agent needs access to content across multiple SharePoint sites
+- ✅ Graph Connectors are configured (ServiceNow, Salesforce, etc.)
+- ✅ Response quality is critical (customer-facing agents)
+- ✅ Cost of 10 credits/interaction is acceptable for the use case
+
+**When to Avoid:**
+- ❌ Agent only needs a single, well-scoped knowledge source
+- ❌ High-volume, low-value interactions (simple FAQ)
+- ❌ Cost optimization is a priority
+
+**Configuration:**
+```
+Agent Settings → Knowledge → Tenant Graph Grounding
+├── Enable: Yes
+├── Enhanced search results: On
+└── Maximum file size: 200 MB (vs. 15 MB standard)
+```
+
+---
+
+##### Chunking Strategies for Retail Documents
+
+| Document Type | Recommended Chunk Size | Overlap | Rationale |
+|--------------|------------------------|---------|-----------|
+| **Product Catalogs** | 500-800 tokens | 100 tokens | Product descriptions are self-contained |
+| **SOPs / Procedures** | 1000-1500 tokens | 200 tokens | Steps should stay together for context |
+| **Policy Manuals** | 800-1200 tokens | 150 tokens | Policy clauses need surrounding context |
+| **Training Materials** | 1200-1500 tokens | 200 tokens | Learning objectives span multiple paragraphs |
+| **FAQ Documents** | 300-500 tokens | 50 tokens | Q&A pairs are atomic units |
+
+**Retail-Specific Chunking Considerations:**
+- **SKU references:** Ensure product codes stay with descriptions
+- **Price tables:** Keep pricing rows with product context
+- **Seasonal content:** Tag chunks with validity dates for filtering
+- **Store-specific content:** Include store/region metadata in chunk
+
+---
+
+##### Multi-Language Considerations for Global Retail
+
+| Scenario | Approach | Trade-offs |
+|----------|----------|------------|
+| **Single-language index, multi-language queries** | Use Azure AI Search with language analyzers | Simple; may miss nuanced translations |
+| **Per-language indexes** | Separate vector indexes per language | High quality; higher cost and maintenance |
+| **Real-time translation** | Translate query → English index → translate response | Flexible; adds latency |
+| **Multilingual embeddings** | Use multilingual embedding models (e.g., E5-multilingual) | Best quality; requires custom index |
+
+**Recommendation for Global Retail:**
+- Use **per-language SharePoint sites** with tenant graph grounding for common languages
+- For long-tail languages, implement **real-time translation** via Azure AI Translator in custom flows
+
+---
+
+##### RAG Performance Optimization
+
+| Optimization | Implementation | Impact |
+|-------------|----------------|--------|
+| **Response caching** | Cache frequent query results (TTL: 1-24h) | Reduce credits 40-60% |
+| **Query classification** | Route simple queries to classic answers | Avoid RAG overhead for FAQ |
+| **Source pre-filtering** | Limit knowledge sources per topic | Reduce retrieval time |
+| **Chunk count tuning** | Reduce from default 3 to 1-2 for simple queries | Lower token usage |
+| **Index optimization** | Remove stale content; deduplicate | Improve retrieval precision |
+
+---
+
+##### Decision Criteria: Which RAG Approach for Retail?
+
+| Scenario | Recommended Approach | Cost Profile |
+|----------|---------------------|--------------|
+| **Store FAQ agent (single site)** | SharePoint + standard search | Low (2 credits/response) |
+| **Enterprise knowledge agent** | Tenant Graph Grounding | Medium-High (12 credits/response) |
+| **Product recommendation agent** | Azure AI Search (custom vectors) | Medium (2 credits + Azure costs) |
+| **Customer service agent (multi-source)** | Hybrid: SharePoint + Graph Connectors + Tenant Graph | High (12+ credits/response) |
+| **Franchise operations agent** | Dataverse Upload + per-region SharePoint | Medium (2 credits/response) |
+
+---
+
+##### Security Considerations
+
+- **ACL Trimming:** SharePoint/OneDrive results respect user permissions; agent only retrieves what the user can access
+- **Sensitivity Labels:** RAG inherits classification from source documents
+- **Cross-Tenant Isolation:** Tenant Graph Grounding is tenant-scoped; no cross-tenant retrieval in native mode
+- **No Training Data:** Customer data is never used to train language models
 
 ### 5.4 Retail-Specific Components
 
@@ -1228,12 +1365,374 @@ Enterprise Tenant                    Retail Tenant
 
 #### 5.4.2 Model Context Protocol (MCP)
 
-**Role:** Provides agents with shared, enterprise-grade understanding of products, inventory, pricing, policies, and customer intent.
+> **Reference:** [Model Context Protocol Specification](https://modelcontextprotocol.io/specification/draft/basic/authorization)  
+> **Status:** Enterprise auth (OAuth 2.1) shipping Q2 2026; MCP Registry planned Q4 2026
 
-**Architecture:**
-- Standardized protocol for agent-to-data communication
-- Supports Microsoft and third-party MCP servers
-- Enables consistent context across agent ecosystem
+**Role:** Provides agents with a standardized protocol for connecting to external data sources, tools, and services—enabling consistent, secure integration across the agent ecosystem.
+
+---
+
+##### MCP Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         COPILOT STUDIO AGENT                         │
+│                    (MCP Client / Host Application)                   │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                    MCP Protocol (JSON-RPC 2.0)
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│  MCP Server   │    │  MCP Server   │    │  MCP Server   │
+│  (Inventory)  │    │    (POS)      │    │  (Workforce)  │
+├───────────────┤    ├───────────────┤    ├───────────────┤
+│ • Resources   │    │ • Resources   │    │ • Resources   │
+│ • Tools       │    │ • Tools       │    │ • Tools       │
+│ • Prompts     │    │ • Prompts     │    │ • Prompts     │
+└───────────────┘    └───────────────┘    └───────────────┘
+        │                     │                     │
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│   Retail      │    │     POS       │    │   Workforce   │
+│   Inventory   │    │    System     │    │   Management  │
+│    System     │    │               │    │    System     │
+└───────────────┘    └───────────────┘    └───────────────┘
+```
+
+**MCP Server Capabilities:**
+- **Resources:** Expose data (inventory levels, product info, schedules) for agent consumption
+- **Tools:** Provide actions the agent can invoke (place order, update schedule, process return)
+- **Prompts:** Pre-configured prompt templates for domain-specific tasks
+
+---
+
+##### 2026 MCP Roadmap: Enterprise Readiness
+
+| Feature | Status | Timeline | Impact on Retail |
+|---------|--------|----------|------------------|
+| **OAuth 2.1 with PKCE** | Specification draft | GA Q2 2026 | Secure token-based auth for MCP servers |
+| **Enterprise IdP Integration** | Roadmap | Q2-Q3 2026 | Entra ID, Okta integration for SSO |
+| **MCP Registry** | Roadmap | Q4 2026 | Verified server directory with security audits |
+| **Audit Trails** | Roadmap | Q3 2026 | Compliance logging for all MCP interactions |
+| **Multi-tenant Support** | Roadmap | Q4 2026 | Tenant isolation for MCP server resources |
+
+**Current Limitations (Pre-Q2 2026):**
+- Authentication relies on static API keys or pre-shared secrets
+- No standardized enterprise identity integration
+- Audit logging must be implemented per-server
+- Cross-tenant MCP requires custom trust configuration
+
+---
+
+##### Retail-Specific MCP Server Patterns
+
+| MCP Server | Resources Exposed | Tools Provided | Use Cases |
+|------------|-------------------|----------------|-----------|
+| **Inventory Management** | Stock levels by SKU/location, allocation rules, reorder points | Check stock, reserve inventory, trigger reorder | Store associates checking availability, automated replenishment |
+| **POS Systems** | Transaction history, register status, tender types | Lookup transaction, process return, void item | Customer service agents, loss prevention queries |
+| **Supplier Analytics** | Vendor performance, lead times, order history | Query supplier metrics, flag delays | Merchandising agents, supply chain optimization |
+| **Workforce Management** | Schedules, shift coverage, time-off requests | Query schedule, swap shifts, approve time-off | Store manager agents, employee self-service |
+| **Pricing & Promotions** | Price rules, active promotions, markdown schedules | Check price, apply discount, validate promo code | Customer service, pricing agents |
+| **Customer Data Platform** | Customer profiles, purchase history, preferences | Lookup customer, update preferences | Personalization agents, loyalty programs |
+
+---
+
+##### MCP Server Implementation Example: Inventory Management
+
+```python
+# MCP Server: Inventory Management (Python SDK example)
+from mcp import MCPServer, Resource, Tool
+
+server = MCPServer("retail-inventory")
+
+@server.resource("inventory/{sku}")
+async def get_inventory(sku: str, location: str = None):
+    """Get current inventory levels for a SKU."""
+    # Query inventory system
+    levels = await inventory_db.query(sku, location)
+    return {
+        "sku": sku,
+        "available": levels.available,
+        "reserved": levels.reserved,
+        "in_transit": levels.in_transit,
+        "locations": levels.by_store
+    }
+
+@server.tool("reserve_inventory")
+async def reserve_inventory(sku: str, quantity: int, store_id: str):
+    """Reserve inventory for a customer order."""
+    result = await inventory_db.reserve(sku, quantity, store_id)
+    return {"reservation_id": result.id, "expires_at": result.expires}
+
+server.run(port=8080, auth="oauth2")  # Q2 2026: OAuth 2.1 support
+```
+
+---
+
+##### MCP Integration with Copilot Studio Agents
+
+| Integration Method | Complexity | When to Use |
+|-------------------|------------|-------------|
+| **Native MCP Tool** | Low | Copilot Studio GA MCP support (preview in Apps SDK) |
+| **HTTP Action → MCP Server** | Medium | Wrap MCP calls in REST API for current compatibility |
+| **Custom Engine Agent** | High | Full MCP client control, complex orchestration |
+| **Power Automate Flow** | Medium | Workflow-based MCP invocation with approvals |
+
+**Current Copilot Studio Integration (Pre-GA):**
+```
+Agent Topic
+├── HTTP Request Action
+│   ├── URL: https://mcp-inventory.retailcorp.com/v1/rpc
+│   ├── Method: POST
+│   ├── Headers: Authorization: Bearer {api_key}
+│   └── Body: {"jsonrpc":"2.0","method":"resource/read","params":{"uri":"inventory/SKU123"}}
+└── Parse JSON Response
+    └── Return formatted inventory data
+```
+
+---
+
+##### MCP vs. Custom API Plugins: Comparison for Retail Integration
+
+| Criterion | MCP Servers | Custom API Plugins |
+|-----------|-------------|-------------------|
+| **Standardization** | ✅ Open protocol; portable across AI platforms | ❌ Proprietary; tied to Copilot Studio |
+| **Discovery** | ✅ Self-describing (capabilities, schemas) | ❌ Manual configuration |
+| **Ecosystem** | ✅ Growing library of pre-built servers | ❌ Build or buy each connector |
+| **Enterprise Auth** | ⚠️ Q2 2026 (OAuth 2.1) | ✅ OAuth/Entra ID today |
+| **Audit Logging** | ⚠️ Q3 2026 (standardized) | ✅ Implement per connector |
+| **Multi-Tenant** | ⚠️ Q4 2026 | ✅ Cross-tenant app reg works today |
+| **Real-Time Context** | ✅ Persistent connection; live updates | ❌ Request/response only |
+| **Cost** | Medium (build/host servers) | Low-Medium (connectors exist) |
+
+**Recommendation for Retail:**
+- **Use MCP** for net-new integrations where you control the backend (inventory, WFM, proprietary systems)
+- **Use Custom API Plugins** for integrations requiring enterprise auth today (Graph, Dynamics 365, ServiceNow)
+- **Hybrid approach:** Build MCP server as abstraction layer; expose via API plugin until native MCP GA
+
+---
+
+##### Security Considerations for MCP in Multi-Tenant Retail
+
+| Risk | Mitigation |
+|------|------------|
+| **Credential exposure** | Store API keys in Azure Key Vault; rotate regularly; migrate to OAuth 2.1 Q2 2026 |
+| **Cross-tenant data leakage** | Implement tenant isolation at MCP server layer; validate tenant context in every request |
+| **Tool misuse** | Define explicit tool allowlists per agent; log all tool invocations |
+| **Resource over-exposure** | Scope MCP server resources to specific datasets; implement RBAC within server |
+| **Supply chain risk** | Vet third-party MCP servers; prefer self-hosted or verified registry servers (Q4 2026) |
+
+**Multi-Tenant MCP Architecture:**
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     ENTERPRISE TENANT                                │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │              MCP Gateway (API Management)                      │  │
+│  │  • Tenant context validation                                   │  │
+│  │  • Request/response logging                                    │  │
+│  │  • Rate limiting per tenant                                    │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                              │                                       │
+│         ┌────────────────────┼────────────────────┐                 │
+│         ▼                    ▼                    ▼                 │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐           │
+│  │ MCP Server  │     │ MCP Server  │     │ MCP Server  │           │
+│  │ (Inventory) │     │   (WFM)     │     │  (Pricing)  │           │
+│  └─────────────┘     └─────────────┘     └─────────────┘           │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+            Cross-Tenant Trust (B2B / App Consent)
+                              │
+┌─────────────────────────────┼───────────────────────────────────────┐
+│                     RETAIL TENANT                                    │
+│                              ▼                                       │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │                   Copilot Studio Agent                         │  │
+│  │  • Accesses MCP via API plugin (pre-GA)                        │  │
+│  │  • Native MCP support (GA Q2-Q3 2026)                          │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 5.5 Multi-Agent Orchestration
+
+> **Reference:** [Explore multi-agent orchestration patterns](https://learn.microsoft.com/en-us/microsoft-copilot-studio/guidance/multi-agent-patterns)  
+> **Status:** Generally Available (April 2026)
+
+**Role:** Enable complex workflows where multiple specialized agents collaborate, delegate tasks, and coordinate responses—essential for retail scenarios spanning inventory, pricing, workforce, and customer service.
+
+---
+
+##### Multi-Agent Architecture Patterns
+
+| Pattern | Description | Use Case | Complexity |
+|---------|-------------|----------|------------|
+| **Inline (Child) Agents** | Small, reusable workflows within the same agent (topics as subroutines) | Shared utilities: translate text, format currency, validate inputs | Low |
+| **Connected Agents** | Separate agents with own orchestration, tools, knowledge; parent delegates to child | Domain specialists: inventory agent ↔ pricing agent ↔ WFM agent | Medium |
+| **Agent-to-Agent (A2A)** | Open protocol for cross-platform agent communication (1P, 2P, 3P) | Third-party integrations: supplier agents, logistics partners | High |
+| **Fabric Data Agents** | Connect to Microsoft Fabric for enterprise data/analytics reasoning | Business intelligence: sales analysis, demand forecasting | Medium |
+
+---
+
+##### Inline vs. Connected Agents: Decision Criteria
+
+**Use Inline (Child) Agents When:**
+- ✅ Task is simple and well-scoped (single responsibility)
+- ✅ Shared context with parent agent is sufficient
+- ✅ No separate governance or access control needed
+- ✅ Reusable across multiple topics in the same agent
+
+**Use Connected Agents When:**
+- ✅ Task requires its own knowledge sources or tools
+- ✅ Different governance rules or access controls apply
+- ✅ Capability should be reusable across many parent agents
+- ✅ Domain expertise warrants dedicated agent (e.g., pricing specialist)
+
+---
+
+##### Retail Multi-Agent Scenario: Store Operations Orchestrator
+
+**Business Need:** A single store manager agent that coordinates inventory, pricing, and workforce questions without requiring the manager to know which system to query.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    STORE OPERATIONS ORCHESTRATOR                     │
+│                    (Main Copilot Studio Agent)                       │
+│                                                                      │
+│  User: "Can we run a flash sale on summer inventory this weekend   │
+│         and do we have enough staff to cover the rush?"             │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │                GENERATIVE ORCHESTRATION                      │    │
+│  │  1. Parse intent: pricing + inventory + workforce            │    │
+│  │  2. Plan: Query inventory → Check pricing rules → Check WFM  │    │
+│  │  3. Execute: Delegate to connected agents                    │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  INVENTORY      │  │    PRICING      │  │   WORKFORCE     │
+│     AGENT       │  │     AGENT       │  │     AGENT       │
+│                 │  │                 │  │                 │
+│ Knowledge:      │  │ Knowledge:      │  │ Knowledge:      │
+│ - Stock levels  │  │ - Promo rules   │  │ - Schedules     │
+│ - Allocations   │  │ - Margin floor  │  │ - Availability  │
+│                 │  │                 │  │                 │
+│ Tools:          │  │ Tools:          │  │ Tools:          │
+│ - Check stock   │  │ - Validate sale │  │ - Check shifts  │
+│ - Reserve units │  │ - Set discount  │  │ - Request cover │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    AGGREGATED RESPONSE                               │
+│                                                                      │
+│  "You have 342 summer items in stock (valued at $18,400). A 25%     │
+│   markdown is within margin guidelines. Saturday coverage is at     │
+│   85%; you may want to request 2 additional associates for the      │
+│   afternoon shift. Shall I draft the shift request?"                │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+##### Connected Agent Configuration
+
+**Parent Agent Setup:**
+```
+Agent: Store Operations Orchestrator
+├── Connected Agents
+│   ├── Inventory Agent
+│   │   ├── Description: "Answers inventory questions; can check stock and reserve units"
+│   │   ├── When to invoke: "User asks about stock, inventory, availability, or allocation"
+│   │   └── Data handoff: Pass store_id, sku_list from conversation context
+│   │
+│   ├── Pricing Agent
+│   │   ├── Description: "Validates promotions and discounts against margin rules"
+│   │   ├── When to invoke: "User asks about pricing, discounts, promotions, or margins"
+│   │   └── Data handoff: Pass product_category, proposed_discount
+│   │
+│   └── Workforce Agent
+│       ├── Description: "Checks schedules and manages shift coverage"
+│       ├── When to invoke: "User asks about staffing, schedules, or shift coverage"
+│       └── Data handoff: Pass store_id, date_range
+```
+
+---
+
+##### Cross-Tenant Multi-Agent Trust
+
+In multi-tenant retail (enterprise + franchise tenants), connected agents may span tenant boundaries.
+
+| Scenario | Trust Model | Configuration |
+|----------|-------------|---------------|
+| **Same tenant** | Implicit (shared environment) | Standard connected agent setup |
+| **Cross-tenant (B2B)** | Explicit (app consent) | Register agent as multi-tenant app; consent in target tenant |
+| **Cross-tenant (A2A)** | Protocol-based | Use Agent-to-Agent protocol with authentication |
+| **Third-party agents** | A2A with verification | Verify agent identity; define scope limits |
+
+**Cross-Tenant Connected Agent Pattern:**
+```
+┌──────────────────────────────┐    ┌──────────────────────────────┐
+│     ENTERPRISE TENANT        │    │       RETAIL TENANT          │
+│                              │    │                              │
+│  ┌────────────────────────┐  │    │  ┌────────────────────────┐  │
+│  │   Pricing Agent        │  │    │  │  Store Ops Orchestrator│  │
+│  │   (Multi-Tenant App)   │◄─┼────┼──│  (Calls Pricing Agent) │  │
+│  │                        │  │    │  │                        │  │
+│  │   App ID: abc-123      │  │    │  │   Uses: B2B consent    │  │
+│  │   Consent: Retail Ten. │  │    │  │   or A2A protocol      │  │
+│  └────────────────────────┘  │    │  └────────────────────────┘  │
+│                              │    │                              │
+└──────────────────────────────┘    └──────────────────────────────┘
+```
+
+---
+
+##### Monitoring & Observability for Multi-Agent Systems
+
+| Layer | What to Monitor | Tools |
+|-------|-----------------|-------|
+| **Orchestrator** | Request routing, plan execution, latency | Agent 365 Observe, Application Insights |
+| **Connected Agents** | Invocation count, response time, errors | Per-agent analytics, Sentinel correlation |
+| **Data Handoff** | Payload size, data quality, missing fields | Custom telemetry in handoff topics |
+| **End-to-End** | Total response time, user satisfaction | Agent 365 dashboards, Copilot Studio analytics |
+
+**Latency Budget (Recommended):**
+| Component | Target | Alert Threshold |
+|-----------|--------|-----------------|
+| Orchestrator planning | <500ms | >1s |
+| Connected agent call | <2s | >4s |
+| Total end-to-end | <5s | >8s |
+
+---
+
+##### Failure Isolation & Circuit Breakers
+
+**Problem:** A failing connected agent can cascade failures to the orchestrator and other agents.
+
+**Mitigation Strategies:**
+| Strategy | Implementation | Impact |
+|----------|----------------|--------|
+| **Timeout per agent** | Set max wait time (e.g., 4s) for each connected agent | Prevent slow agents from blocking |
+| **Graceful degradation** | If agent unavailable, return partial response with disclaimer | Maintain user experience |
+| **Circuit breaker** | After N failures, skip agent for M minutes | Reduce retry storm |
+| **Fallback topics** | Define fallback behavior if connected agent fails | Predictable error handling |
+
+**Example: Graceful Degradation Response**
+```
+"I found that we have 342 summer items in stock, and a 25% markdown 
+is within guidelines. However, I couldn't reach the workforce system 
+to check staffing. Please check the WFM dashboard or try again in 
+a few minutes."
+```
+
+---
 
 ### 5.7 OWASP Top 10 for Agentic AI Mapping
 
