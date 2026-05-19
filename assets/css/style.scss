@@ -1,0 +1,69 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+/* Override narrow default width - minimal theme uses .wrapper */
+.wrapper {
+  max-width: 1400px !important;
+  width: 95% !important;
+  margin: 0 auto;
+}
+
+section {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Ensure tables use full width and scroll if needed */
+table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+th, td {
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+
+/* Code blocks - full width with horizontal scroll */
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 16px;
+  background: #f6f8fa;
+  border-radius: 6px;
+}
+
+code {
+  white-space: pre;
+}
+
+/* Images scale properly */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ASCII diagrams need monospace and no wrapping */
+pre code {
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: auto;
+  display: block;
+}
+
+/* Better mobile handling */
+@media (max-width: 768px) {
+  .wrapper {
+    width: 100% !important;
+    padding: 0 15px;
+  }
+  
+  table {
+    font-size: 14px;
+  }
+}
