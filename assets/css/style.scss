@@ -3,83 +3,86 @@
 
 @import "{{ site.theme }}";
 
-/* Fix header overlap - make it flow normally */
-header {
-  position: relative !important;
-  float: none !important;
-  width: 100% !important;
-  max-width: 1400px;
-  margin: 0 auto 20px auto;
-  padding: 20px;
-  text-align: center;
+/* Widen the main content area */
+.main-content {
+  max-width: 80rem;  /* ~1280px, up from default 64rem */
 }
 
-/* Main content section - full width */
-section {
-  float: none !important;
-  width: 100% !important;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* Clear the wrapper */
-.wrapper {
-  max-width: 1400px;
-  width: 95%;
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-/* Ensure tables use full width and scroll if needed */
+/* Tables - full width with horizontal scroll for large tables */
 table {
   display: block;
   width: 100%;
-  max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
+  margin: 1rem 0;
 }
 
-th, td {
-  white-space: nowrap;
-  padding: 8px 12px;
+table th,
+table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e9ebec;
 }
 
-/* Code blocks - full width with horizontal scroll */
+table th {
+  background-color: #f3f6fa;
+  font-weight: 600;
+}
+
+table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Code blocks - proper width and scrolling */
 pre {
   max-width: 100%;
   overflow-x: auto;
-  padding: 16px;
-  background: #f6f8fa;
-  border-radius: 6px;
+  padding: 1rem;
+  background-color: #f3f6fa;
+  border-radius: 0.3rem;
+  line-height: 1.5;
 }
 
-code {
+pre code {
   white-space: pre;
+  word-wrap: normal;
 }
 
-/* Images scale properly */
+/* Inline code */
+code {
+  padding: 0.2em 0.4em;
+  background-color: #f3f6fa;
+  border-radius: 0.2rem;
+  font-size: 0.9em;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+}
+
+/* Images */
 img {
   max-width: 100%;
   height: auto;
 }
 
-/* ASCII diagrams need monospace and no wrapping */
-pre code {
-  white-space: pre;
-  word-wrap: normal;
-  overflow-x: auto;
-  display: block;
+/* Better link styling in tables */
+table a {
+  word-break: break-word;
 }
 
-/* Better mobile handling */
-@media (max-width: 768px) {
-  header, section, .wrapper {
-    width: 100% !important;
-    padding: 0 15px;
+/* Responsive adjustments */
+@media screen and (max-width: 42em) {
+  .main-content {
+    padding: 1rem;
   }
   
   table {
-    font-size: 14px;
+    font-size: 0.875rem;
+  }
+  
+  table th,
+  table td {
+    padding: 0.5rem;
   }
 }
