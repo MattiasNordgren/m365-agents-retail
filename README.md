@@ -2,6 +2,19 @@
 
 Enterprise-grade reference architecture for deploying Microsoft 365 Copilot agents across multi-tenant retail organizations.
 
+<!-- FORK-MOD: Fork tracking section added -->
+## Fork Information
+
+| | |
+|---|---|
+| **This Fork** | `MattiasNordgren/m365-agents-retail` |
+| **Upstream** | `nordgren/m365-agents-retail` |
+| **Fork Changes** | See [FORK-CHANGES.md](FORK-CHANGES.md) |
+| **Last Sync** | 2026-05-31 |
+
+This fork includes implementation learnings from a real-world global retail deployment. All fork-specific content is marked with `<!-- FORK-* -->` comments for easy identification during upstream merges.
+<!-- FORK-MOD: End -->
+
 ## Overview
 
 This repository provides enterprise architects, security teams, and transformation leaders with a **company-agnostic framework** for designing, deploying, operating, and securing M365 agents across environments where multiple Entra ID tenants exist (typically an Enterprise/Corporate tenant and a Retail/Store Operations tenant).
@@ -46,6 +59,33 @@ This repository provides enterprise architects, security teams, and transformati
   - Target-State Roadmap Templates
   - Quarterly Scorecard & Heatmap Tracking
   - Assessment Templates (Detailed Worksheet, Action Planning, Executive Summary)
+
+<!-- FORK-MOD: Implementation resources section added -->
+### Implementation Resources (Fork-Only)
+
+- **[CASE-STUDY-RETAIL.md](CASE-STUDY-RETAIL.md)** — Anonymized real-world implementation
+  - 6-week Phase 0 completion (3.7/5.0 maturity achieved)
+  - Pattern B dual-tenant architecture selection
+  - Hybrid CoE (6 FTE core + 12 federated) design
+  - €2.33M 3-year business case
+  - Critical blockers and anti-patterns identified
+
+- **[PHASE-0-CHECKLIST.md](PHASE-0-CHECKLIST.md)** — Foundation phase checklist
+  - Week-by-week activities and gates
+  - Deliverables with owners and due dates
+  - Success criteria and red flags
+
+- **[COST-MODEL-TEMPLATE.md](COST-MODEL-TEMPLATE.md)** — Financial planning template
+  - Per-agent cost calculator (€1,450-3,600/month)
+  - Team cost model (6 FTE core @ €720K/year)
+  - 3-year TCO framework
+  - Chargeback and optimization guidance
+
+- **[FORK-CHANGES.md](FORK-CHANGES.md)** — Fork change tracking
+  - All modifications documented
+  - Upstream sync procedure
+  - Reapply priorities
+<!-- FORK-MOD: End -->
 
 ### PlantUML Diagrams
 
@@ -171,9 +211,17 @@ This work is provided as enterprise architecture guidance. Adapt freely to your 
 
 ---
 
-**Version:** 3.2  
-**Date:** 2026-04-11  
+**Version:** 3.2-fork.1  
+**Date:** 2026-05-31  
 **Changelog:**
+<!-- FORK-MOD: Version tracking for fork -->
+- v3.2-fork.1: Added implementation learnings from global retail deployment
+  - NEW: CASE-STUDY-RETAIL.md (anonymized implementation story)
+  - NEW: PHASE-0-CHECKLIST.md (6-week foundation checklist)
+  - NEW: COST-MODEL-TEMPLATE.md (per-agent cost calculator)
+  - NEW: FORK-CHANGES.md (change tracking for upstream sync)
+  - Updated README with fork information section
+<!-- FORK-MOD: End -->
 - v3.2: Platform retirements & migration path; Advanced attack patterns (Karuparti); Automated red teaming with PyRIT; Agent development standards (AGENTS.md, SKILL.md); Build vs Run layer; ROI framework
 - v3.0-3.1: Agent 365 integration, OWASP Top 10 mapping, native multi-tenant mode, RAG/MCP expansion, multi-agent orchestration, operational runbooks, worked cost examples
 - v2.0: Added ORG-GOVERNANCE.md, AI-MATURITY-MODEL.md, expanded failure modes, cost model, new diagrams
