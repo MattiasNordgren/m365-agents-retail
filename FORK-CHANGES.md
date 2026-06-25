@@ -1,3 +1,8 @@
+---
+title: Fork Changes
+nav_order: 8
+---
+
 # Fork Changes Tracking
 
 **Fork:** `MattiasNordgren/m365-agents-retail`  

@@ -1,11 +1,20 @@
 title: M365 Agents for Retail
 description: Enterprise architecture for Microsoft 365 agents in multi-tenant retail environments
-remote_theme: pages-themes/cayman@v0.2.0
+remote_theme: just-the-docs/just-the-docs
 plugins:
   - jekyll-remote-theme
 
-# Hide download buttons
-show_downloads: false
+color_scheme: retail
+search_enabled: true
+heading_anchors: true
+back_to_top: true
+back_to_top_text: "Back to top"
+aux_links:
+  "View fork on GitHub":
+    - "//github.com/MattiasNordgren/m365-agents-retail"
+  "View upstream":
+    - "//github.com/nordgren/m365-agents-retail"
+aux_links_new_tab: true
 
 # Exclude non-web files from processing
 exclude:

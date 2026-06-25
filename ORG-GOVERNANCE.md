@@ -1,3 +1,8 @@
+---
+title: Governance
+nav_order: 3
+---
+
 # Organizational Model & Governance for M365 Agents in Franchise Retail
 
 **Version:** 1.0  

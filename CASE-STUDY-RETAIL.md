@@ -1,3 +1,8 @@
+---
+title: Retail Case Study
+nav_order: 5
+---
+
 <!-- FORK-NEW: This entire file is fork-specific content -->
 <!-- Source: IKEA M365 Agents Phase 0 implementation (2026-05-31) -->
 <!-- Reapply Priority: HIGH -->

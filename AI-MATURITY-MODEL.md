@@ -1,3 +1,8 @@
+---
+title: AI Maturity Model
+nav_order: 4
+---
+
 # AI Maturity Model for M365 Agents Adoption
 
 **Version:** 1.0  

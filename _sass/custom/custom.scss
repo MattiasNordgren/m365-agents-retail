@@ -1,0 +1,20 @@
+@media (min-width: 66.5rem) {
+  .main-content-wrap {
+    max-width: 88rem;
+  }
+}
+
+.main-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.main-content pre {
+  overflow-x: auto;
+}
+
+.main-content img {
+  max-width: 100%;
+  height: auto;
+}

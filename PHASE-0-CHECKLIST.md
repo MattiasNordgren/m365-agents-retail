@@ -1,3 +1,8 @@
+---
+title: Phase 0 Checklist
+nav_order: 6
+---
+
 <!-- FORK-NEW: This entire file is fork-specific content -->
 <!-- Source: IKEA M365 Agents Phase 0 implementation (2026-05-31) -->
 <!-- Reapply Priority: HIGH -->

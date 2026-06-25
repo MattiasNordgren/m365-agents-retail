@@ -1,3 +1,8 @@
+---
+title: Architecture
+nav_order: 2
+---
+
 # Enterprise Architecture for M365 Agents in Multi-Tenant Retail Environments
 
 **Version:** 3.2  
