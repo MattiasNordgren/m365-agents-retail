@@ -1931,27 +1931,6 @@ Next Update: [Time]
 ---
 
 ## 5. Detailed Component Descriptions
-   ☐ Identify responsible business unit
-   ```
-
-3. **Mitigation**
-   ```
-   ☐ If malicious/errant: Disable agent immediately
-   ☐ If legitimate spike: Communicate to budget owner
-   ☐ If optimization needed: Engage CoE engineering
-   ```
-
-4. **Resolution**
-   ```
-   ☐ Implement fix (code optimization, caching, limits)
-   ☐ Update cost baseline if legitimate growth
-   ☐ Adjust alerts as needed
-   ☐ Document lessons learned
-   ```
-
----
-
-## 5. Detailed Component Descriptions
 
 ### 5.1 Identity & Access Components
 
