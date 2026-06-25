@@ -92,6 +92,8 @@ A global retail organization with **28 markets**, **dual Entra ID tenants** (Cor
 3. **Risk isolation:** Corporate and retail data remain separated
 4. **Future flexibility:** Can evolve to native multi-tenant mode as Microsoft roadmap matures
 
+**Implementation note:** The launch baseline used **B2B collaboration for coworker access**, a central **IGA orchestration layer** for provisioning and entitlements, and separate **CIAM** patterns for customer-facing experiences. Native multi-tenant agent behavior was treated as a later optimization because the retail tenant was intentionally constrained.
+
 **Cost Model:**
 
 | Category | Annual Cost |
@@ -207,6 +209,7 @@ Weeks 1-6       Months 1-3       Months 4-9        Months 10-12+
 2. **Purview deployment gates compliance.** Include in Month 1.
 3. **API-only agents prove value faster.** Save RAG for Phase 2.
 4. **6 FTE core team is minimum viable.** 4 platform + 2 operations.
+5. **Constrained retail tenants should launch with B2B + IGA + CIAM separation.** Do not assume native multi-tenant or collaboration-heavy channels are the safest Day-1 path.
 
 ### Financial
 

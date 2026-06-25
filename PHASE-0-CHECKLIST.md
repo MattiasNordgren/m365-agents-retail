@@ -113,6 +113,10 @@ Phase 0 establishes the foundation for M365 Agents adoption. It answers three qu
 - [ ] Document current tenant structure
 - [ ] Identify cross-tenant requirements
 - [ ] Assess Entra External ID readiness
+- [ ] Confirm whether retail tenant is a constrained application tenant or a workforce/collaboration tenant
+- [ ] Validate coworker identity baseline (B2B guest default, exception path, POS/local identity if applicable)
+- [ ] Validate customer access pattern (approved CIAM path, not tenant user provisioning)
+- [ ] Confirm IGA / entitlement orchestration boundaries for groups, roles, SCIM, and D365 connectors
 - [ ] Define identity architecture for agents
 
 #### Security Architecture

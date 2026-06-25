@@ -755,6 +755,21 @@ Copilot Studio now supports **native multi-tenant mode**, allowing agents hosted
 
 ---
 
+<!-- FORK-ENH: Added constrained-retail launch baseline from implementation learnings -->
+#### Real-World Pattern B Baseline for Constrained Retail Tenants
+
+In some retail organizations, the retail tenant is **not** intended to operate as a workforce and collaboration tenant. In these cases, the safest launch baseline for Pattern B is often:
+
+- **B2B collaboration** as the default coworker access path
+- A central **IGA / entitlement orchestration layer** to manage provisioning, roles, SCIM flows, and D365-specific connectors
+- **CIAM** for customer-facing scenarios rather than tenant identities
+- Native multi-tenant agent behavior treated as a **future optimization**, not a Day-1 dependency
+
+This baseline is especially useful when the retail tenant is intentionally constrained, retailer identity maturity varies, and pilot success depends more on predictable access control than on the lowest-friction channel experience.
+<!-- FORK-ENH: End -->
+
+---
+
 #### Decision Guidance: When to Use Each Pattern
 
 **Use Native Multi-Tenant Mode When:**
@@ -771,6 +786,8 @@ Copilot Studio now supports **native multi-tenant mode**, allowing agents hosted
 - ✅ Full analytics and transcript compliance requirements
 - ✅ Limited number of cross-tenant users (manual invite manageable)
 - ✅ Production workloads requiring GA-supported features
+- ✅ Retail coworker access must be kept separate from customer CIAM paths
+- ✅ The retail tenant is intentionally constrained and uses centralized IGA orchestration
 
 **Use Cross-Tenant Synchronization When:**
 - ✅ Large-scale user base requiring cross-tenant access

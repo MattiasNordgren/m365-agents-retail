@@ -56,6 +56,7 @@ Changes to existing upstream files. Each change is marked in the file with `<!--
 | Section | Change Type | Description |
 |---------|-------------|-------------|
 | §4.2 Pattern B Details | FORK-ENH | Added cost model example (€720K/year + €168K setup) |
+| §4.2 Pattern B Details | FORK-ENH | Added constrained-retail launch baseline (B2B + IGA + CIAM, native multitenant as future optimization) |
 | §8.1 Team Structure | FORK-MOD | Added specific sizing guidance (6 FTE core + 12 federated) |
 | §NEW Critical Path | FORK-NEW | Added critical path dependencies section |
 | §NEW ROI Timeline | FORK-ENH | Added Fall 2026 agentic commerce example |
@@ -125,6 +126,19 @@ git push origin main --tags
 - Pattern B architecture selected
 - Hybrid CoE (6 FTE core + 12 federated) designed
 - €2.33M 3-year business case approved
+
+---
+
+### 2026-06-25: Identity Baseline Clarification from Additional IAM Sources
+
+**Context:** Added more detailed retail IAM source material covering access model, role assignment, D365 authorization, and naming conventions.
+
+**Changes Made:**
+1. Enhanced `M365-AGENTS-ARCHITECTURE.md` with a constrained-retail Pattern B baseline
+2. Enhanced `CASE-STUDY-RETAIL.md` to show B2B + IGA + CIAM separation as the launch pattern
+3. Updated `PHASE-0-CHECKLIST.md` to validate tenant type, coworker/user-type paths, CIAM, and IGA boundaries during Week 3
+
+**Validation:** New source material confirmed that the Phase 0 architecture direction is sufficient for pilot planning, but customer CIAM and entitlement standards remain explicit dependencies before implementation sign-off.
 
 ---
 
