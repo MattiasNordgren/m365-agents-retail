@@ -705,6 +705,7 @@ This maturity model provides a structured framework for assessing, planning, and
 **Overall Maturity Level:** ___ / 5
 
 **Dimension Summary:**
+
 | Dimension | Score | Level | Trend |
 |-----------|-------|-------|-------|
 | Strategy | | | |

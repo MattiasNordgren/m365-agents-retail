@@ -472,6 +472,7 @@ The following models estimate total cost of ownership for three retail deploymen
 | **ANNUAL TOTAL** | | | **$2,369,760** |
 
 **Cost Allocation Model (Chargeback):**
+
 | Tenant | Copilot Credits | Infrastructure | Support | Total/Month |
 |--------|-----------------|----------------|---------|-------------|
 | Enterprise | $960 | $360 | $60,000 | $61,320 |
@@ -2015,6 +2016,7 @@ Enterprise Tenant                    Retail Tenant
 - Inherits M365 security, compliance, governance
 
 **Limits:**
+
 | Limit | Value |
 |-------|-------|
 | Grounding records | 50 items |
@@ -2579,6 +2581,7 @@ In multi-tenant retail (enterprise + franchise tenants), connected agents may sp
 | **End-to-End** | Total response time, user satisfaction | Agent 365 dashboards, Copilot Studio analytics |
 
 **Latency Budget (Recommended):**
+
 | Component | Target | Alert Threshold |
 |-----------|--------|-----------------|
 | Orchestrator planning | <500ms | >1s |
@@ -2592,6 +2595,7 @@ In multi-tenant retail (enterprise + franchise tenants), connected agents may sp
 **Problem:** A failing connected agent can cascade failures to the orchestrator and other agents.
 
 **Mitigation Strategies:**
+
 | Strategy | Implementation | Impact |
 |----------|----------------|--------|
 | **Timeout per agent** | Set max wait time (e.g., 4s) for each connected agent | Prevent slow agents from blocking |
@@ -2647,6 +2651,7 @@ An attacker embeds malicious instructions in a product description or customer m
 - **Agent 365 Threat Protection:** Runtime detection of goal hijacking attempts with alerting
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Anomaly in agent decision patterns (e.g., unusual inventory transfers) | Auto-pause agent; trigger investigation | AI Operations |
@@ -2720,6 +2725,7 @@ A store operations agent legitimately connected to inventory, pricing, and custo
 - **Agent 365 Govern Pillar:** Tool usage monitoring and policy enforcement
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Unusual tool chaining sequence (e.g., price→inventory→notify) | Flag for human review before execution | Business Process Owner |
@@ -2751,6 +2757,7 @@ An agent operating under delegated user permissions in the retail tenant accesse
 - **Cross-Tenant Access Settings:** Explicit trust with granular permission scoping
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Agent identity accessing resources outside defined scope | Block access; review agent permissions | IAM Team |
@@ -2784,6 +2791,7 @@ A third-party retail analytics connector used by franchise agents is compromised
 - **Environment Isolation:** Production environments separate from development/test
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Connector update outside change window | Block deployment; require CAB approval | Platform Engineering |
@@ -2812,6 +2820,7 @@ An analytics agent generates a query or script that, when executed against a ret
 - **Output Filtering:** Generated content is validated before execution
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Agent attempting to generate SQL/scripts outside approved templates | Block execution; log attempt | AI Engineering |
@@ -2837,6 +2846,7 @@ An attacker injects misleading information into a SharePoint knowledge base used
 - **Grounding Data Governance:** Microsoft Purview tracks data lineage
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Unusual edits to high-value knowledge sources | Alert content owner; review changes | Knowledge Management |
@@ -2844,6 +2854,7 @@ An attacker injects misleading information into a SharePoint knowledge base used
 | Embedding index rebuild outside schedule | Verify authorization; check for tampering | Platform Engineering |
 
 **Knowledge Source Governance:**
+
 | Source Type | Write Access | Audit Frequency | Validation |
 |-------------|--------------|-----------------|------------|
 | Corporate Policy Docs | Restricted (Policy team only) | Real-time | Approval workflow |
@@ -2866,6 +2877,7 @@ A rogue agent in a franchisee tenant impersonates an enterprise inventory agent,
 - **Agent 365 Registry:** Authoritative inventory of legitimate agents per tenant
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | A2A communication from unregistered agent | Block; alert security | IAM Team |
@@ -2907,6 +2919,7 @@ An error in an enterprise pricing agent cascades to retail store agents, which t
 - **Agent 365 Observe Pillar:** Real-time monitoring of agent health and dependencies
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Spike in agent error rates (>2σ from baseline) | Trigger circuit breaker; isolate affected agents | AI Operations |
@@ -2965,6 +2978,7 @@ A malicious actor manipulates an agent to present a fraudulent refund request wi
 - **Agent 365 Governance:** Policies for what agents can request from users
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Agent requesting approval for action outside normal patterns | Add friction (second approver, delay) | Business Process Owner |
@@ -2972,6 +2986,7 @@ A malicious actor manipulates an agent to present a fraudulent refund request wi
 | User reports agent exhibiting pressure tactics | Disable agent; review prompt design | AI Engineering |
 
 **Human-in-the-Loop Thresholds:**
+
 | Action Type | Threshold | Approval Requirement |
 |-------------|-----------|---------------------|
 | Customer refund | >$500 | Manager approval + reason code |
@@ -2995,6 +3010,7 @@ A Copilot Studio agent initially scoped to answer store policy questions gradual
 - **Disable/Restrict Controls:** Immediate containment without code deployment
 
 **Retail-Specific Detection & Response:**
+
 | Detection Method | Response Action | Owner |
 |-----------------|-----------------|-------|
 | Agent accessing resources not in original manifest | Disable agent; investigate configuration drift | AI Engineering |
@@ -3346,6 +3362,7 @@ Agent Settings → Content Moderation → Custom Rules
 ```
 
 **Agent Response Behavior:**
+
 | Query | Without Policy | With Policy |
 |-------|---------------|-------------|
 | "What's John Smith's email?" | john.smith@email.com | Customer email on file. For verification, please confirm last 4 digits of phone. |
