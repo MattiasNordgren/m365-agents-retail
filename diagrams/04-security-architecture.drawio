@@ -27,7 +27,7 @@
         
         <!-- Identity Layer -->
         <mxCell id="identity-layer" value="Identity Security Layer" style="swimlane;fillColor=#E3F2FD;strokeColor=#1565C0;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="40" y="180" width="630" height="140" as="geometry" />
+          <mxGeometry x="40" y="180" width="760" height="140" as="geometry" />
         </mxCell>
         <mxCell id="entra" value="Entra ID" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0" vertex="1" parent="identity-layer">
           <mxGeometry x="20" y="35" width="100" height="40" as="geometry" />
@@ -47,10 +47,10 @@
         <mxCell id="ctas" value="Cross-Tenant&#xa;Access Settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0" vertex="1" parent="identity-layer">
           <mxGeometry x="20" y="90" width="110" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="b2b" value="B2B&#xa;Collaboration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0" vertex="1" parent="identity-layer">
+        <mxCell id="b2b" value="B2B Collab&#xa;(guest default)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0" vertex="1" parent="identity-layer">
           <mxGeometry x="150" y="90" width="90" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="cts" value="Cross-Tenant&#xa;Sync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0" vertex="1" parent="identity-layer">
+        <mxCell id="cts" value="Cross-Tenant&#xa;Sync (future)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0;dashed=1" vertex="1" parent="identity-layer">
           <mxGeometry x="260" y="90" width="90" height="40" as="geometry" />
         </mxCell>
         <mxCell id="app-reg" value="App&#xa;Registrations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0" vertex="1" parent="identity-layer">
@@ -58,6 +58,12 @@
         </mxCell>
         <mxCell id="mi" value="Managed&#xa;Identities" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1565C0" vertex="1" parent="identity-layer">
           <mxGeometry x="480" y="90" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="iga-sec" value="Central IGA&#xa;(SailPoint)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#5E35B1" vertex="1" parent="identity-layer">
+          <mxGeometry x="590" y="35" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ciam-sec" value="Customer CIAM&#xa;(separate from coworker)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B3E5FC;strokeColor=#0277BD;fontSize=9" vertex="1" parent="identity-layer">
+          <mxGeometry x="590" y="90" width="150" height="40" as="geometry" />
         </mxCell>
         
         <!-- Network Layer -->

@@ -5,64 +5,76 @@ skinparam componentStyle rectangle
 skinparam defaultFontName Arial
 skinparam defaultFontSize 10
 
-title Dual-Tenant Agent Architecture (Enterprise + Retail)
+title Dual-Tenant Agent Architecture (Enterprise + Constrained Retail)\nBaseline: B2B coworker access + Central IGA orchestration + CIAM customer separation
 
-rectangle "Enterprise Tenant" #E3F2FD {
+rectangle "Enterprise Tenant (ONEIIG)\nWorkforce + Collaboration" #E3F2FD {
     actor "Corporate User" as corp_user
-    
+
     package "M365 Copilot" #BBDEFB {
         [Copilot Client] as corp_copilot
         [Copilot Orchestrator] as corp_orchestrator
     }
-    
+
     package "Corporate Agents" #90CAF9 {
         [Merchandising Agent] as merch_agent
         [Supply Chain Agent] as supply_agent
         [HR Policy Agent] as hr_agent
     }
-    
+
     package "Corporate Data" #64B5F6 {
         database "SharePoint\n(Corporate)" as corp_sp
         database "Dataverse\n(Corporate)" as corp_dv
         database "Corporate LOB" as corp_lob
     }
-    
+
     package "Identity (Enterprise)" #42A5F5 {
         [Entra ID\n(Enterprise)] as corp_entra
-        [App Registration\n(Multi-tenant)] as corp_app
+        [App Registration\n(home tenant)] as corp_app
     }
 }
 
-rectangle "Retail Tenant" #FFF3E0 {
-    actor "Store Associate" as store_user
-    
-    package "M365 (Retail)" #FFE0B2 {
-        [Teams\n(Frontline)] as retail_teams
-        [Copilot Chat] as retail_copilot
+rectangle "Central Identity Governance" #EDE7F6 {
+    [SailPoint\n(IGA / Entitlement\nOrchestration)] as sailpoint
+    [Retailer IGA / HR /\nNERM feeds] as retailer_src
+    [SCIM / OIDC / SAML\nProvisioning] as scim
+}
+
+rectangle "Retail Tenant (IIGRS)\nConstrained Application Tenant" #FFF3E0 {
+    package "M365 (Limited)" #FFE0B2 {
+        [Teams\n(Frontline, B2B guest)] as retail_teams
     }
-    
+
     package "Retail Agents" #FFCC80 {
         [Store Ops Agent] as store_agent
         [Inventory Agent] as inv_agent
         [Workforce Agent] as wfm_agent
     }
-    
+
+    package "Dynamics 365 (F&O / CRM)" #FFB74D {
+        [D365 F&O / CRM] as d365
+        [POS (local D365 users)] as pos_users
+    }
+
     package "Retail Data" #FFB74D {
         database "SharePoint\n(Retail)" as retail_sp
-        database "POS System" as pos
         database "Inventory\nManagement" as inventory
         database "Workforce\nManagement" as wfm
     }
-    
+
     package "Identity (Retail)" #FFA726 {
-        [Entra ID\n(Retail)] as retail_entra
+        [Entra ID\n(Retail, B2B guests +\nmember fallback)] as retail_entra
         [Service Principal\n(Consented)] as retail_sp_app
     }
 }
 
+rectangle "Customer Access (CIAM)" #E1F5FE {
+    actor "Retail Customer" as customer
+    [CIAM (External ID)\nNOT tenant identities] as ciam
+}
+
 rectangle "Cross-Tenant Integration" #E8F5E9 {
     [Cross-Tenant\nAccess Settings] as ctas
-    [B2B Collaboration\nor Sync] as b2b
+    [B2B Collaboration\n(guest default)] as b2b
     [API Gateway\n(mTLS)] as api_gw
 }
 
@@ -77,33 +89,54 @@ supply_agent --> corp_lob
 hr_agent --> corp_dv
 corp_user --> corp_entra
 
+' Central IGA orchestration flows
+retailer_src --> sailpoint
+sailpoint --> scim
+scim --> retail_entra : Provision groups,\nB2B guests, app roles
+sailpoint --> d365 : Direct SailPoint\nconnectors
+sailpoint -[#7E57C2,dashed]-> corp_entra : Workforce entitlements
+
 ' Retail internal flows
-store_user --> retail_teams
-store_user --> retail_copilot
 retail_teams --> store_agent
-retail_copilot --> inv_agent
-retail_copilot --> wfm_agent
 store_agent --> retail_sp
 inv_agent --> inventory
-inv_agent --> pos
 wfm_agent --> wfm
-store_user --> retail_entra
+store_agent --> d365
+pos_users --> d365
+
+' Customer flows (kept separate from coworker identity)
+customer --> ciam
+ciam --> d365 : Customer-facing\nscenarios only
 
 ' Cross-tenant flows
 corp_app <--> ctas
 ctas <--> retail_sp_app
 corp_entra <--> b2b
-b2b <--> retail_entra
+b2b <--> retail_entra : Coworkers as\nexternal guests
 merch_agent --> api_gw
 api_gw --> inventory : Query Stock Levels
 supply_agent --> api_gw
-api_gw --> pos : Sales Data
+api_gw --> d365 : Sales / Ops Data
+
+note bottom of sailpoint
+  Central entitlement orchestration
+  - Fed by retailer IGA / HR / NERM
+  - Non-D365 apps: Entra security
+    groups + SCIM/OIDC/SAML
+  - D365 F&O/CRM: direct connectors
+end note
 
 note bottom of ctas
   Explicit trust configuration
-  - Inbound: Which Enterprise users allowed
-  - Outbound: Which Retail resources accessible
+  - Inbound: which Enterprise users allowed
+  - Outbound: which Retail resources accessible
   - Conditional Access requirements
+end note
+
+note bottom of b2b
+  Launch baseline = B2B guest (default),
+  internal member only as fallback.
+  Native multi-tenant Copilot = future optimization.
 end note
 
 note bottom of api_gw

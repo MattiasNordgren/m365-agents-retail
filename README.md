@@ -94,8 +94,8 @@ Located in `/plantuml/`:
 | Diagram | Description |
 |---------|-------------|
 | `01-conceptual-architecture.puml` | High-level architectural layers |
-| `02-dual-tenant-architecture.puml` | Enterprise + Retail tenant integration |
-| `03-identity-api-patterns.puml` | Authentication flows (OBO, Client Credentials, WIF) |
+| `02-dual-tenant-architecture.puml` | Enterprise (ONEIIG) + constrained Retail (IIGRS) integration: B2B coworker access, central IGA (SailPoint) orchestration, CIAM customer separation |
+| `03-identity-api-patterns.puml` | Identity & API flows (IGA/SailPoint provisioning, B2B guest OBO, App-only/WIF, customer CIAM) |
 | `04-operational-flow.puml` | Agent request processing sequence |
 | `05-cicd-pipeline.puml` | DevSecOps pipeline stages |
 | `06-coe-structure.puml` | Agent CoE organizational structure |
@@ -108,9 +108,9 @@ Located in `/diagrams/`:
 | Diagram | Description |
 |---------|-------------|
 | `01-conceptual-architecture.drawio` | Layered architecture overview |
-| `02-dual-tenant.drawio` | Dual-tenant deployment model |
+| `02-dual-tenant.drawio` | Constrained dual-tenant model: B2B guests + central IGA + CIAM |
 | `03-team-structure.drawio` | Governance structure & team interactions |
-| `04-security-architecture.drawio` | Zero trust security controls |
+| `04-security-architecture.drawio` | Zero trust security controls (incl. central IGA & CIAM separation) |
 | `05-governance-model.drawio` | Hub-and-spoke franchise governance |
 | `06-ai-maturity-heatmap.drawio` | Maturity assessment heatmap template |
 

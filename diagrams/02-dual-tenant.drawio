@@ -7,7 +7,7 @@
         <mxCell id="1" parent="0" />
         
         <!-- Enterprise Tenant -->
-        <mxCell id="enterprise-tenant" value="Enterprise Tenant" style="swimlane;fillColor=#E3F2FD;strokeColor=#1565C0;fontStyle=1;fontSize=14" vertex="1" parent="1">
+        <mxCell id="enterprise-tenant" value="Enterprise Tenant (ONEIIG) — Workforce + Collaboration" style="swimlane;fillColor=#E3F2FD;strokeColor=#1565C0;fontStyle=1;fontSize=14" vertex="1" parent="1">
           <mxGeometry x="40" y="40" width="500" height="400" as="geometry" />
         </mxCell>
         
@@ -27,7 +27,7 @@
         </mxCell>
         
         <!-- App Registration -->
-        <mxCell id="app-reg" value="App Registration&#xa;(Multi-tenant)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#64B5F6;strokeColor=#1565C0" vertex="1" parent="enterprise-tenant">
+        <mxCell id="app-reg" value="App Registration&#xa;(home tenant)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#64B5F6;strokeColor=#1565C0" vertex="1" parent="enterprise-tenant">
           <mxGeometry x="370" y="120" width="100" height="50" as="geometry" />
         </mxCell>
         
@@ -54,7 +54,7 @@
         </mxCell>
         
         <!-- Retail Tenant -->
-        <mxCell id="retail-tenant" value="Retail Tenant" style="swimlane;fillColor=#FFF3E0;strokeColor=#E65100;fontStyle=1;fontSize=14" vertex="1" parent="1">
+        <mxCell id="retail-tenant" value="Retail Tenant (IIGRS) — Constrained Application Tenant (D365)" style="swimlane;fillColor=#FFF3E0;strokeColor=#E65100;fontStyle=1;fontSize=14" vertex="1" parent="1">
           <mxGeometry x="840" y="40" width="500" height="400" as="geometry" />
         </mxCell>
         
@@ -64,12 +64,12 @@
         </mxCell>
         
         <!-- Teams Frontline -->
-        <mxCell id="retail-teams" value="Teams&#xa;(Frontline)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100" vertex="1" parent="retail-tenant">
+        <mxCell id="retail-teams" value="Teams&#xa;(Frontline, B2B guest)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100" vertex="1" parent="retail-tenant">
           <mxGeometry x="100" y="60" width="80" height="40" as="geometry" />
         </mxCell>
         
         <!-- Retail Identity -->
-        <mxCell id="ret-identity" value="Entra ID&#xa;(Retail)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#E65100" vertex="1" parent="retail-tenant">
+        <mxCell id="ret-identity" value="Entra ID (Retail)&#xa;B2B guests + member fallback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#E65100" vertex="1" parent="retail-tenant">
           <mxGeometry x="30" y="50" width="100" height="50" as="geometry" />
         </mxCell>
         
@@ -119,7 +119,7 @@
         <mxCell id="ctas" value="Cross-Tenant&#xa;Access Settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32" vertex="1" parent="cross-tenant">
           <mxGeometry x="60" y="40" width="130" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="b2b" value="B2B Collaboration&#xa;/ Sync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32" vertex="1" parent="cross-tenant">
+        <mxCell id="b2b" value="B2B Collaboration&#xa;(guest default)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32" vertex="1" parent="cross-tenant">
           <mxGeometry x="60" y="110" width="130" height="50" as="geometry" />
         </mxCell>
         <mxCell id="api-gw" value="API Gateway&#xa;(mTLS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32" vertex="1" parent="cross-tenant">
@@ -145,9 +145,42 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
+        <!-- Central Identity Governance (SailPoint) -->
+        <mxCell id="iga-zone" value="Central Identity Governance" style="swimlane;fillColor=#EDE7F6;strokeColor=#5E35B1;fontStyle=1;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="560" y="430" width="260" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="sailpoint" value="SailPoint&#xa;(IGA / Entitlement&#xa;Orchestration)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#5E35B1" vertex="1" parent="iga-zone">
+          <mxGeometry x="60" y="40" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="retailer-src" value="Retailer IGA / HR / NERM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#5E35B1" vertex="1" parent="iga-zone">
+          <mxGeometry x="40" y="110" width="180" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="scim" value="SCIM / OIDC / SAML provisioning&#xa;(non-D365) + D365 connectors" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#5E35B1;fontSize=9" vertex="1" parent="iga-zone">
+          <mxGeometry x="40" y="150" width="180" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Customer CIAM (separate from coworker identity) -->
+        <mxCell id="ciam-zone" value="Customer Access (CIAM) — NOT tenant identities" style="swimlane;fillColor=#E1F5FE;strokeColor=#0277BD;fontStyle=1;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="840" y="460" width="500" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="customer" value="Retail Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#0277BD;strokeColor=#0277BD" vertex="1" parent="ciam-zone">
+          <mxGeometry x="40" y="50" width="30" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ciam" value="CIAM (External ID)&#xa;Customer-facing scenarios only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B3E5FC;strokeColor=#0277BD" vertex="1" parent="ciam-zone">
+          <mxGeometry x="150" y="50" width="200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- IGA / CIAM connectors -->
+        <mxCell id="conn-iga1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5E35B1;strokeWidth=2" edge="1" parent="1" source="sailpoint" target="ret-identity">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-iga2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5E35B1;strokeWidth=2;dashed=1" edge="1" parent="1" source="sailpoint" target="ent-identity">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
         <!-- Legend -->
         <mxCell id="legend" value="Legend" style="swimlane;fillColor=#FAFAFA;strokeColor=#9E9E9E" vertex="1" parent="1">
-          <mxGeometry x="40" y="480" width="300" height="100" as="geometry" />
+          <mxGeometry x="40" y="480" width="480" height="100" as="geometry" />
         </mxCell>
         <mxCell id="leg1" value="Enterprise Tenant" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0" vertex="1" parent="legend">
           <mxGeometry x="20" y="30" width="80" height="25" as="geometry" />
@@ -157,6 +190,12 @@
         </mxCell>
         <mxCell id="leg3" value="Cross-Tenant" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32" vertex="1" parent="legend">
           <mxGeometry x="200" y="30" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="Central IGA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#5E35B1" vertex="1" parent="legend">
+          <mxGeometry x="290" y="30" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" value="Customer CIAM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0277BD" vertex="1" parent="legend">
+          <mxGeometry x="380" y="30" width="80" height="25" as="geometry" />
         </mxCell>
         <mxCell id="leg4" value="Data Flow" style="endArrow=classic;html=1;strokeColor=#2E7D32;strokeWidth=2;dashed=1" edge="1" parent="legend">
           <mxGeometry width="50" height="50" relative="1" as="geometry">

@@ -5,83 +5,85 @@ skinparam defaultFontName Arial
 skinparam defaultFontSize 10
 skinparam sequenceMessageAlign center
 
-title Identity & API Integration Patterns for Cross-Tenant Agents
+title Identity & API Integration Patterns for Constrained Dual-Tenant Agents
 
-== Pattern 1: Delegated User Access (OBO Flow) ==
+== Pattern 1: IGA-Driven Provisioning & Entitlement (SailPoint) ==
 
-actor "Corporate User" as user1
-participant "M365 Copilot" as copilot1
-participant "Corporate Agent" as agent1
-participant "Enterprise\nEntra ID" as entra1
-participant "Retail\nEntra ID" as entra2
-participant "Retail API" as api1
+participant "Retailer IGA /\nHR / NERM" as src
+participant "SailPoint\n(Central IGA)" as sp
+participant "Retail\nEntra ID (IIGRS)" as entra_r
+participant "D365 F&O / CRM" as d365
 
-user1 -> copilot1: Invoke agent
-copilot1 -> entra1: Authenticate user
+src -> sp: Identity & role events\n(joiner / mover / leaver)
+sp -> entra_r: SCIM provisioning\n(security groups, B2B guest,\napp roles) for non-D365 apps
+sp -> d365: Direct connector\n(roles, duties, segregation\nof duties)
+entra_r --> sp: Provisioning status
+d365 --> sp: Assignment confirmation
+note over sp
+  Single source of entitlement truth
+  - Non-D365 apps: Entra groups + SCIM/OIDC/SAML
+  - D365 F&O/CRM: direct SailPoint connectors
+  - POS users provisioned as local D365 users
+end note
+
+== Pattern 2: Coworker Access via B2B Guest (Delegated, OBO) ==
+
+actor "Retail Coworker" as user1
+participant "M365 Copilot /\nTeams (Enterprise)" as copilot1
+participant "Enterprise\nEntra ID (ONEIIG)" as entra1
+participant "Retail\nEntra ID (IIGRS)" as entra2
+participant "Retail Agent / API" as api1
+
+user1 -> copilot1: Invoke agent (as B2B guest)
+copilot1 -> entra1: Authenticate guest principal
 entra1 --> copilot1: Access token (user)
-copilot1 -> agent1: Execute with user token
-agent1 -> entra1: OBO token exchange\n(for Retail API scope)
-entra1 -> entra2: Cross-tenant token\n(B2B trust)
-entra2 --> agent1: Downstream token
-agent1 -> api1: Call API with\ndownstream token
-api1 --> agent1: Response
-agent1 --> copilot1: Agent response
-copilot1 --> user1: Display result
-
+copilot1 -> entra1: OBO token exchange\n(for Retail scope)
+entra1 -> entra2: Cross-tenant token\n(B2B trust, CTAS)
+entra2 --> copilot1: Downstream token
+copilot1 -> api1: Call with downstream token
+api1 --> copilot1: Response
 note over entra1, entra2
   Requires:
-  - Cross-tenant access settings
-  - B2B collaboration enabled
-  - API permissions consented
+  - Cross-tenant access settings (CTAS)
+  - B2B guest as default; member only as fallback
+  - Entitlements provisioned via SailPoint (Pattern 1)
 end note
 
-== Pattern 2: Application-Only Access (Client Credentials) ==
-
-participant "Scheduled Job" as job
-participant "Corporate Agent" as agent2
-participant "Enterprise\nEntra ID" as entra3
-participant "Retail\nEntra ID" as entra4
-participant "Retail API" as api2
-
-job -> agent2: Trigger scheduled task
-agent2 -> entra3: Client credentials\n(certificate)
-entra3 --> agent2: App-only token
-agent2 -> api2: Call API\n(multi-tenant app)
-note right: Service principal\nexists in Retail\ntenant via consent
-api2 -> entra4: Validate token
-entra4 --> api2: Token valid
-api2 --> agent2: Response
-agent2 --> job: Task complete
-
-note over entra3, entra4
-  Requires:
-  - Multi-tenant app registration
-  - Admin consent in Retail tenant
-  - Certificate-based auth (no secrets)
-end note
-
-== Pattern 3: Workload Identity Federation ==
+== Pattern 3: Application-Only & Workload Identity Federation ==
 
 participant "Azure Function\n(Agent Host)" as func
 participant "User-Assigned\nManaged Identity" as mi
-participant "Enterprise\nEntra ID" as entra5
-participant "Retail\nEntra ID" as entra6
+participant "Enterprise\nEntra ID (ONEIIG)" as entra5
+participant "Retail\nEntra ID (IIGRS)" as entra6
 participant "Retail API" as api3
 
 func -> mi: Request token
 mi -> entra5: Federated credential\n(no secrets)
-entra5 --> mi: Token for\nmulti-tenant app
+entra5 --> mi: App-only token\n(consented service principal)
 mi --> func: Access token
 func -> api3: Call Retail API
 api3 -> entra6: Validate token
 entra6 --> api3: Token valid
 api3 --> func: Response
-
 note over mi
-  Benefits:
-  - No secrets to manage
-  - Auto-rotation
-  - Audit trail
+  No secrets, auto-rotation, audit trail.
+  Native multi-tenant Copilot behavior is a
+  FUTURE optimization, not the launch baseline.
+end note
+
+== Pattern 4: Customer Access via CIAM (Separation) ==
+
+actor "Retail Customer" as cust
+participant "CIAM\n(External ID)" as ciam
+participant "Customer-facing\nApp / API" as capp
+
+cust -> ciam: Sign-in (social / local)
+ciam --> cust: CIAM token
+cust -> capp: Access customer scenario
+note over ciam
+  Customers are NEVER provisioned as
+  tenant (workforce) identities.
+  CIAM is fully separate from coworker B2B paths.
 end note
 
 @enduml
